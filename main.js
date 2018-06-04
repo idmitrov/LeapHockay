@@ -1,91 +1,124 @@
 const controller = new Leap.Controller({ enableGestures: true });
 
 controller.loop((frame) => {
-    console.log(frame.hands[0])
+    // console.log(frame.hands[0])
 });
 
 const canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
-var ballRadius = 5;
-var x = canvas.width / 2;
-var y = canvas.height - 30;
-var dx = 2;
-var dy = -2;
-
-var paddleHeight = 5;
-var paddleWidth = 50;
-var paddleX = (canvas.width - paddleWidth) /2;
-
-var rightPressed = false;
-var leftPressed = false;
-
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
 
+var ballRadius = 5;
+var ballPostionX = canvas.width / 2;
+var ballPostionY = canvas.height - 30;
+var dx = 2;
+var dy = -2;
+
+var paddleHeight = 50;
+var paddleWidth = 5;
+var paddleLeftY = (canvas.height - paddleHeight) / 2;
+
+var paddleRightY = (canvas.height - paddleHeight) / 2;
+
+let leftPaddleUpPressed = false;
+let leftPaddleDownPressed = false;
+
+let rightPaddleUpPressed = false;
+let rightPaddleDownPressed = false;
+
 function keyDownHandler(e) {
-    if(e.keyCode == 39) {
-        rightPressed = true;
-    }
-    else if(e.keyCode == 37) {
-        leftPressed = true;
+    if (e.keyCode == 38) {
+        leftPaddleUpPressed = true;
+    } else if (e.keyCode == 40) {
+        leftPaddleDownPressed = true;
+    } else if (e.keyCode == 87) {
+        rightPaddleUpPressed = true;
+    } else if (e.keyCode == 83) {
+        rightPaddleDownPressed = true;
     }
 }
+
 function keyUpHandler(e) {
-    if(e.keyCode == 39) {
-        rightPressed = false;
-    }
-    else if(e.keyCode == 37) {
-        leftPressed = false;
+    if (e.keyCode == 38) {
+        leftPaddleUpPressed = false;
+    } else if (e.keyCode == 40) {
+        leftPaddleDownPressed = false;
+    } else if (e.keyCode == 87) {
+        rightPaddleUpPressed = false;
+    } else if (e.keyCode == 83) {
+        rightPaddleDownPressed = false;
     }
 }
 
-function drawBall() {
+const drawBall = () => {
     ctx.beginPath();
-    ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+    ctx.arc(ballPostionX, ballPostionY, ballRadius, 0, Math.PI * 2);
     ctx.fillStyle = "#0095DD";
     ctx.fill();
     ctx.closePath();
 }
 
-function drawPaddle() {
+const draweLeftPaddle = () => {
     ctx.beginPath();
-    ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
-    ctx.fillStyle = "#0095DD";
+    ctx.rect(0, paddleLeftY, paddleWidth, paddleHeight);
+    ctx.fillStyle = "#09F";
     ctx.fill();
     ctx.closePath();
 }
 
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawBall();
-    drawPaddle();
-    
-    if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
+const drawRightPaddle = () => {
+    ctx.beginPath();
+    ctx.rect(canvas.width - paddleWidth, paddleRightY, paddleWidth, paddleHeight);
+    ctx.fillStyle = "#FFF";
+    ctx.fill();
+    ctx.closePath();
+}
+
+const handlePaddleMove = () => {
+    if (leftPaddleDownPressed && paddleLeftY < canvas.height - paddleHeight) {
+        paddleLeftY += 7;
+    } else if (leftPaddleUpPressed && paddleLeftY > 0) {
+        paddleLeftY -= 7;
+    }
+
+    if (rightPaddleDownPressed && paddleRightY < canvas.height - paddleHeight) {
+        paddleRightY += 7;
+    } else if (rightPaddleUpPressed && paddleRightY > 0) {
+        paddleRightY -= 7;
+    }
+}
+
+const handleBallCollision = () => {
+    if (ballPostionX + dx > canvas.width - ballRadius || ballPostionX + dx < ballRadius) {
         dx = -dx;
     }
-    if(y + dy < ballRadius) {
+
+    if (ballPostionY + dy < ballRadius) {
         dy = -dy;
-    }
-    else if(y + dy > canvas.height-ballRadius) {
-        if(x > paddleX && x < paddleX + paddleWidth) {
+    } else if (ballPostionY + dy > canvas.height - ballRadius) {
+        if (ballPostionX > paddleLeftY && ballPostionX < paddleLeftY + paddleWidth) {
             dy = -dy;
-        }
-        else {
+        } else {
             // alert("GAME OVER");
             // document.location.reload();
         }
     }
-    
-    if(rightPressed && paddleX < canvas.width-paddleWidth) {
-        paddleX += 7;
-    }
-    else if(leftPressed && paddleX > 0) {
-        paddleX -= 7;
-    }
-    
-    x += dx;
-    y += dy;
+}
+
+const draw = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawBall();
+    draweLeftPaddle();
+    drawRightPaddle();
+
+    handleBallCollision()
+    handlePaddleMove();
+
+    ballPostionX += dx;
+    ballPostionY += dy;
 }
 
 setInterval(draw, 10);
