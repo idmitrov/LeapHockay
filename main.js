@@ -1,22 +1,50 @@
 const controller = new Leap.Controller({ enableGestures: true });
 
+const FIRST_PLAYER_HAND = 'right';
+let drawInterval = 10;
+
+handleFirstPlayerMovement = (hand) => {
+    let handY = hand.palmPosition[1];
+
+    paddleLeftY = canvas.height - (handY / 3) - (paddleHeight / 2);
+}
+
+handleSecondPlayerMovement = (hand) => {
+    let handY = hand.palmPosition[1];
+
+    paddleRightY = canvas.height - (handY / 3) - (paddleHeight / 2);
+}
+
 controller.loop((frame) => {
-    // console.log(frame.hands[0])
+    if (frame.hands.length) {
+        frame.hands.forEach(hand => {
+            if (hand.type === FIRST_PLAYER_HAND) {
+                handleFirstPlayerMovement(hand);
+            } else {
+                handleSecondPlayerMovement(hand);
+            }
+        });
+    }
 });
 
 const canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
+let scoreNode = document.getElementById('score');
+let isGamePaused = false;
 
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
 
-var ballRadius = 5;
+let leftPlayerScore = 0;
+let rightPlayerScore = 0;
+
+var ballRadius = 3;
 var ballPostionX = canvas.width / 2;
 var ballPostionY = canvas.height - 30;
 var dx = 2;
 var dy = -2;
 
-var paddleHeight = 60;
+var paddleHeight = 50;
 var paddleWidth = 5;
 
 var paddleLeftY = (canvas.height - paddleHeight) / 2;
@@ -52,10 +80,10 @@ function keyUpHandler(e) {
     }
 }
 
-const drawBall = () => {
+const drawBall = (ballColor = '#EEE') => {
     ctx.beginPath();
     ctx.arc(ballPostionX, ballPostionY, ballRadius, 0, Math.PI * 2);
-    ctx.fillStyle = "#0095DD";
+    ctx.fillStyle = ballColor;
     ctx.fill();
     ctx.closePath();
 }
@@ -71,7 +99,7 @@ const draweLeftPaddle = () => {
 const drawRightPaddle = () => {
     ctx.beginPath();
     ctx.rect(canvas.width - paddleWidth, paddleRightY, paddleWidth, paddleHeight);
-    ctx.fillStyle = "#FFF";
+    ctx.fillStyle = "#09F";
     ctx.fill();
     ctx.closePath();
 }
@@ -90,6 +118,17 @@ const handlePaddleMove = () => {
     }
 }
 
+const onGameRoundOver = (winner) => {
+    if (winner == 'left') {
+        leftPlayerScore += 1;
+    } else {
+        rightPlayerScore += 1;
+    }
+
+    scoreNode.innerText = `P1: ${leftPlayerScore} - P2: ${rightPlayerScore}`;
+    isGamePaused = true;
+}
+
 const handleBallCollision = () => {
     if (ballPostionY + dy > canvas.height - ballRadius || ballPostionY + dy < ballRadius) {
         dy = -dy;
@@ -99,29 +138,44 @@ const handleBallCollision = () => {
         if (ballPostionY > paddleLeftY && ballPostionY < paddleLeftY + paddleHeight) {
             dx = -dx;
         } else {
-            document.location.reload();
+            onGameRoundOver('right');
         }
     } else if (ballPostionX + dx > canvas.width - ballRadius) {
         if (ballPostionY > paddleRightY && ballPostionY < paddleRightY + paddleHeight) {
             dx = -dx;
-        } else {
-            document.location.reload();
+        } else {            
+            onGameRoundOver('left');
         }
     }
 }
 
-const draw = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+suggestRestart = () => {
+    isGamePaused = false;
+    ballPostionX = canvas.width / 2;
+    ballPostionY = canvas.height - 30;
 
-    drawBall();
-    draweLeftPaddle();
-    drawRightPaddle();
-
-    handleBallCollision()
-    handlePaddleMove();
-
-    ballPostionX += dx;
-    ballPostionY += dy;
+    let restartTimeout = setTimeout(() => {
+        game = setInterval(draw, drawInterval)
+    }, 1000);
 }
 
-setInterval(draw, 10);
+const draw = () => {
+    if (!isGamePaused) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+        drawBall();
+        draweLeftPaddle();
+        drawRightPaddle();
+    
+        handleBallCollision()
+        handlePaddleMove();
+    
+        ballPostionX += dx;
+        ballPostionY += dy;
+    } else {
+        clearInterval(game);
+        suggestRestart();
+    }
+}
+
+let game = setInterval(draw, drawInterval);
