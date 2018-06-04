@@ -16,10 +16,10 @@ var ballPostionY = canvas.height - 30;
 var dx = 2;
 var dy = -2;
 
-var paddleHeight = 50;
+var paddleHeight = 60;
 var paddleWidth = 5;
-var paddleLeftY = (canvas.height - paddleHeight) / 2;
 
+var paddleLeftY = (canvas.height - paddleHeight) / 2;
 var paddleRightY = (canvas.height - paddleHeight) / 2;
 
 let leftPaddleUpPressed = false;
@@ -91,18 +91,21 @@ const handlePaddleMove = () => {
 }
 
 const handleBallCollision = () => {
-    if (ballPostionX + dx > canvas.width - ballRadius || ballPostionX + dx < ballRadius) {
-        dx = -dx;
+    if (ballPostionY + dy > canvas.height - ballRadius || ballPostionY + dy < ballRadius) {
+        dy = -dy;
     }
 
-    if (ballPostionY + dy < ballRadius) {
-        dy = -dy;
-    } else if (ballPostionY + dy > canvas.height - ballRadius) {
-        if (ballPostionX > paddleLeftY && ballPostionX < paddleLeftY + paddleWidth) {
-            dy = -dy;
+    if (ballPostionX + dx < ballRadius) {
+        if (ballPostionY > paddleLeftY && ballPostionY < paddleLeftY + paddleHeight) {
+            dx = -dx;
         } else {
-            // alert("GAME OVER");
-            // document.location.reload();
+            document.location.reload();
+        }
+    } else if (ballPostionX + dx > canvas.width - ballRadius) {
+        if (ballPostionY > paddleRightY && ballPostionY < paddleRightY + paddleHeight) {
+            dx = -dx;
+        } else {
+            document.location.reload();
         }
     }
 }
