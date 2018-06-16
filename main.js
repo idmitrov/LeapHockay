@@ -2,6 +2,7 @@ const controller = new Leap.Controller({ enableGestures: true });
 
 const FIRST_PLAYER_HAND = 'right';
 let drawInterval = 10;
+let restartTimeout;
 
 handleFirstPlayerMovement = (hand) => {
     let handY = hand.palmPosition[1];
@@ -149,12 +150,12 @@ const handleBallCollision = () => {
     }
 }
 
-suggestRestart = () => {
+const suggestRestart = () => {
     isGamePaused = false;
     ballPostionX = canvas.width / 2;
     ballPostionY = canvas.height - 30;
 
-    let restartTimeout = setTimeout(() => {
+    restartTimeout = setTimeout(() => {
         game = setInterval(draw, drawInterval)
     }, 1000);
 }
@@ -174,6 +175,8 @@ const draw = () => {
         ballPostionY += dy;
     } else {
         clearInterval(game);
+        clearTimeout(restartTimeout);
+        
         suggestRestart();
     }
 }
